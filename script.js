@@ -6,9 +6,21 @@ let currentProduct = localStorage.getItem("currentProduct") || null;
 
 function saveProducts() {
   localStorage.setItem("products", JSON.stringify(products));
-  localStorage.setItem("currentProduct", currentProduct || "");
+  localStorage.setItem("currentProduct", currentProduct);
 }
 
+function loadProducts() {
+  const savedProducts = localStorage.getItem("products");
+  const savedCurrentProduct = localStorage.getItem("currentProduct");
+
+  if (savedProducts) {
+    products = JSON.parse(savedProducts);
+  }
+
+  if (savedCurrentProduct) {
+    currentProduct = savedCurrentProduct;
+  }
+}
 function refreshProductSelect() {
   const select = document.getElementById("productSelect");
 
@@ -630,36 +642,42 @@ function exportJSON() {
   a.click();
 }
 
-
 function importJSON() {
   document.getElementById("jsonFileInput").click();
 }
 
-
-document.getElementById("jsonFileInput").addEventListener("change", function(event) {
-
+document.getElementById("jsonFileInput").addEventListener("change", function (event) {
   const file = event.target.files[0];
-
   if (!file) return;
 
   const reader = new FileReader();
 
-  reader.onload = function(e) {
+  reader.onload = function (e) {
+    try {
+      const importedData = JSON.parse(e.target.result);
 
-    const importedData = JSON.parse(e.target.result);
+      for (const name in importedData) {
+        products[name] = importedData[name];
+      }
 
-    Object.assign(products, importedData);
+      const names = Object.keys(products);
+      currentProduct = names.length ? names[0] : "";
 
-    saveProducts();
-    renderRanking();
-    renderChart();
-    calculateTotalAsset();
+      saveProducts();
+      refreshProductSelect();
+      renderTable();
+      renderChart();
+      renderRanking();
+      calculateTotalAsset();
 
-    alert("復元成功！");
+      alert("復元成功！");
+    } catch (error) {
+      alert("JSON読込に失敗しました");
+      console.error(error);
+    }
   };
 
   reader.readAsText(file);
-
 });
 function saveDraft() {
 
@@ -699,3 +717,10 @@ document.getElementById("mercari").addEventListener("input", saveDraft);
 document.getElementById("snkrdunk").addEventListener("input", saveDraft);
 document.getElementById("sommelier").addEventListener("input", saveDraft);
 document.getElementById("homura").addEventListener("input", saveDraft);
+
+loadProducts();
+refreshProductSelect();
+renderTable();
+renderChart();
+renderRanking();
+calculateTotalAsset();
