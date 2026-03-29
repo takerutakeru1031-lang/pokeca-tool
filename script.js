@@ -545,66 +545,33 @@ document.getElementById("rankingSpeedText").innerHTML =
 
 function openMercari() {
   const productName = document.getElementById("productSelect").value;
-
   if (!productName) {
     alert("商品を選択してください");
     return;
   }
-
-  const mercariURL =
-    "https://www.mercari.com/jp/search/?keyword=" +
-    encodeURIComponent(productName);
-
-  location.href = mercariURL;
+  window.open(
+    "https://www.mercari.com/jp/search/?keyword=" + encodeURIComponent(productName),
+    "_blank"
+  );
 }
-
 function openSnkrdunk() {
-
   const productName = document.getElementById("productSelect").value;
-
   if (!productName) {
     alert("商品を選択してください");
     return;
   }
-
-  const snkrdunkURL =
-    "https://snkrdunk.com/search?q=" +
-    encodeURIComponent(productName);
-
-  location.href = snkrdunkURL;
+  window.open(
+    "https://snkrdunk.com/search?keyword=" + encodeURIComponent(productName),
+    "_blank"
+  );
 }
-
-
 function openSommelier() {
-
-  const productName = document.getElementById("productSelect").value;
-
-  if (!productName) {
-    alert("商品を選択してください");
-    return;
-  }
-
-  const sommelierURL =
-    "https://somurie-kaitori.com/";
-
-  location.href = sommelierURL;
+  window.open("https://somurie-kaitori.com/", "_blank");
 }
-
-
 function openHomura() {
-
-  const productName = document.getElementById("productSelect").value;
-
-  if (!productName) {
-    alert("商品を選択してください");
-    return;
-  }
-
-  const homuraURL =
-    "https://kaitori-homura.com/";
-
-  location.href = homuraURL;
+  window.open("https://kaitori-homura.com/", "_blank");
 }
+
 async function fetchMercariPrice(productName) {
   return null;
 }
@@ -653,3 +620,82 @@ function calculateTotalAsset() {
   document.getElementById("totalProfit").textContent =
     "含み益合計：" + totalProfit.toLocaleString() + "円";
 }
+function exportJSON() {
+  const dataStr = JSON.stringify(products, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "products_backup.json";
+  a.click();
+}
+
+
+function importJSON() {
+  document.getElementById("jsonFileInput").click();
+}
+
+
+document.getElementById("jsonFileInput").addEventListener("change", function(event) {
+
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+
+    const importedData = JSON.parse(e.target.result);
+
+    Object.assign(products, importedData);
+
+    saveProducts();
+    renderRanking();
+    renderChart();
+    calculateTotalAsset();
+
+    alert("復元成功！");
+  };
+
+  reader.readAsText(file);
+
+});
+function saveDraft() {
+
+  const draft = {
+
+    date: document.getElementById("date").value,
+    mercari: document.getElementById("mercari").value,
+    snkrdunk: document.getElementById("snkrdunk").value,
+    sommelier: document.getElementById("sommelier").value,
+    homura: document.getElementById("homura").value
+
+  };
+
+  localStorage.setItem("draftData", JSON.stringify(draft));
+}
+
+
+
+function loadDraft() {
+
+  const draft = JSON.parse(localStorage.getItem("draftData"));
+
+  if (!draft) return;
+
+  document.getElementById("date").value = draft.date || "";
+  document.getElementById("mercari").value = draft.mercari || "";
+  document.getElementById("snkrdunk").value = draft.snkrdunk || "";
+  document.getElementById("sommelier").value = draft.sommelier || "";
+  document.getElementById("homura").value = draft.homura || "";
+
+}
+
+
+window.addEventListener("load", loadDraft);
+document.getElementById("date").addEventListener("input", saveDraft);
+document.getElementById("mercari").addEventListener("input", saveDraft);
+document.getElementById("snkrdunk").addEventListener("input", saveDraft);
+document.getElementById("sommelier").addEventListener("input", saveDraft);
+document.getElementById("homura").addEventListener("input", saveDraft);
