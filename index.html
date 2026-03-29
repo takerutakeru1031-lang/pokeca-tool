@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>利益グラフ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>利益管理ツール</h1>
+
+<section>
+  <h2>商品登録</h2>
+
+<input id="productName" placeholder="商品名">
+<input id="productBuyPrice" placeholder="仕入れ価格">
+<input id="quantity" placeholder="個数">
+<button onclick="addProduct()">商品追加</button>
+</section>
+
+<section>
+  <h2>価格履歴入力</h2>
+
+  <p>商品選択</p>
+  <select id="productSelect" onchange="changeProduct()"></select>
+
+<div class="price-row">
+  <input id="date" placeholder="日付（例: 5/18）">
+</div>
+
+<div class="price-row">
+  <input id="mercari" placeholder="メルカリ価格">
+  <button onclick="openMercari()">見る</button>
+</div>
+
+<div class="price-row">
+  <input id="snkrdunk" placeholder="スニダン価格">
+  <button onclick="openSnkrdunk()">見る</button>
+</div>
+
+<div class="price-row">
+  <input id="sommelier" placeholder="ソムリエ価格">
+  <button onclick="openSommelier()">見る</button>
+</div>
+
+<div class="price-row">
+  <input id="homura" placeholder="ホムラ価格">
+  <button onclick="openHomura()">見る</button>
+</div>
+
+<button onclick="addData()">追加</button>
+</section>
+
+<section>
+<p id="summaryText">商品情報：未選択</p>
+<p id="marketChangeText">市場変化：未計算</p>
+<p id="entryPositionText">参入ポジション：未計算</p>
+<p id="holdingPeriodText">保有日数：未計算</p>
+<canvas id="chart"></canvas>
+
+</section>
+
+<section>
+  <div id="assetSummary">
+
+  <h2>ポケカ資産サマリー</h2>
+
+  <p id="totalAsset">
+    ポケカ資産総額：0円
+  </p>
+
+  <p id="totalCost">
+    投資額合計：0円
+  </p>
+
+  <p id="totalProfit">
+    含み益合計：0円
+  </p>
+
+</div>
+<h2>商品一覧</h2>
+<button onclick="exportCSV()">CSV出力</button>
+<table border="1">
+  <thead>
+    <tr>
+      <th>商品名</th>
+      <th>仕入れ価格</th>
+      <th>メルカリ</th>
+      <th>スニダン</th>
+      <th>買取</th>
+      <th>最高販路</th>
+      <th>最大利益</th>
+      <th>利益率</th>
+      <th>削除</th>
+    </tr>
+  </thead>
+  <tbody id="productTable">
+  </tbody>
+</table>
+
+</section>
+
+<section>
+<h2>ランキング</h2>
+
+<p id="rankingProfitText">利益額ランキング：未計算</p>
+<p id="rankingRateText">利益率ランキング：未計算</p>
+<p id="rankingSpeedText">1日あたり利益ランキング：未計算</p>
+
+</section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

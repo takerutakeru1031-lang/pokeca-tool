@@ -1,0 +1,76 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: #f5f6f8;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+section {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+input {
+  padding: 8px;
+  margin: 4px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 8px 14px;
+  margin: 4px;
+  border-radius: 8px;
+  border: none;
+  background: #007aff;
+  color: white;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #005fcc;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: white;
+}
+
+th {
+  background: #f1f3f5;
+  padding: 10px;
+}
+
+td {
+  padding: 10px;
+  text-align: center;
+}
+
+tr:nth-child(even) {
+  background: #fafafa;
+}
+canvas {
+  width: 100% !important;
+  max-width: 900px;
+  height: 320px !important;
+  display: block;
+  margin: 0 auto;
+}
+p {
+  margin: 8px 0;
+}
+.price-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.price-row input {
+  flex: 1;
+}
