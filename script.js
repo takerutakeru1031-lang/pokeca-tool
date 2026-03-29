@@ -407,6 +407,7 @@ function deleteProduct(name) {
 
   saveProducts();
   refreshProductSelect();
+  renderTable();
   renderChart();
   renderRanking();
   calculateTotalAsset();
