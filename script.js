@@ -656,10 +656,7 @@ document.getElementById("jsonFileInput").addEventListener("change", function (ev
     try {
       const importedData = JSON.parse(e.target.result);
 
-      for (const name in importedData) {
-        products[name] = importedData[name];
-      }
-
+      products = importedData;
       const names = Object.keys(products);
       currentProduct = names.length ? names[0] : "";
 
