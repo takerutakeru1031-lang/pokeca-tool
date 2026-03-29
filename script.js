@@ -23,7 +23,6 @@ function loadProducts() {
 }
 function refreshProductSelect() {
   const select = document.getElementById("productSelect");
-
   select.innerHTML = "";
 
   for (const name in products) {
@@ -32,11 +31,11 @@ function refreshProductSelect() {
     option.textContent = name;
     select.appendChild(option);
   }
-}
 
   if (currentProduct && products[currentProduct]) {
     select.value = currentProduct;
   }
+}
 
 
 function addProduct() {
@@ -146,6 +145,7 @@ history.push({
 renderChart();
 renderRanking();
 calculateTotalAsset();
+localStorage.removeItem("draftData");
 }
 
 function renderChart() {
@@ -311,8 +311,7 @@ document.getElementById("holdingPeriodText").textContent =
   renderTable();
 }
 
-refreshProductSelect();
-renderChart();
+
 
   function renderTable() {
   const table = document.getElementById("productTable");
@@ -500,61 +499,6 @@ function renderRanking() {
     formatRanking(bySpeed, "1日あたり利益ランキング", "speed");
 }
 
-function formatRanking(list, label, unit = "") {
-  let text = label + "：";
-
-  for (let i = 0; i < Math.min(3, list.length); i++) {
-    const item = list[i];
-
-    let value;
-    if (unit === "%") {
-      value = item.profitRate;
-    } else if (unit === "speed") {
-      value = item.profitPerDay;
-    } else {
-      value = item.profit;
-    }
-
-    text +=
-      (i + 1) +
-      "位 " +
-      item.name +
-      "（<span style='color:" +
-      (value >= 0 ? "green" : "red") +
-      "'>" +
-      value +
-      (unit === "%" ? "%" : "") +
-      "</span>） ";
-  }
-
-  return text;
-}
-
-document.getElementById("rankingProfitText").innerHTML =
-  formatRanking(byProfit, "利益額ランキング");
-
-document.getElementById("rankingRateText").innerHTML =
-  formatRanking(byRate, "利益率ランキング", "%");
-
-document.getElementById("rankingSpeedText").innerHTML =
-  formatRanking(bySpeed, "1日あたり利益ランキング", "speed");
-
-  
-
-  // 選択中商品も解除
-  if (currentProduct === name) {
-    currentProduct = null;
-  }
-
-  // localStorage を完全に更新
-  localStorage.setItem("products", JSON.stringify(products));
-  localStorage.setItem("currentProduct", currentProduct || "");
-
-  // 画面を更新
-  refreshProductSelect();
-  renderTable();
-  renderChart();
-
 function openMercari() {
   const productName = document.getElementById("productSelect").value;
   if (!productName) {
@@ -607,16 +551,16 @@ function calculateTotalAsset() {
   for (const name in products) {
     const product = products[name];
 
-    if (!product.history.length) continue;
+    if (!product.history || product.history.length === 0) continue;
 
     const last = product.history[product.history.length - 1];
 
     const bestPrice = Math.max(
-      last.mercari,
-      last.snkrdunk,
-      last.purchase
-    );
-
+  last.mercari || 0,
+  last.snkrdunk || 0,
+  last.sommelier || 0,
+  last.homura || 0
+);
     totalValue += bestPrice * product.quantity;
    totalCost += product.buyPrice * product.quantity;
   }
@@ -707,17 +651,19 @@ function loadDraft() {
 
 }
 
+window.addEventListener("load", function () {
+  loadProducts();
+  loadDraft();
 
-window.addEventListener("load", loadDraft);
-document.getElementById("date").addEventListener("input", saveDraft);
-document.getElementById("mercari").addEventListener("input", saveDraft);
-document.getElementById("snkrdunk").addEventListener("input", saveDraft);
-document.getElementById("sommelier").addEventListener("input", saveDraft);
-document.getElementById("homura").addEventListener("input", saveDraft);
+  refreshProductSelect();
+  renderTable();
+  renderChart();
+  renderRanking();
+  calculateTotalAsset();
 
-loadProducts();
-refreshProductSelect();
-renderTable();
-renderChart();
-renderRanking();
-calculateTotalAsset();
+  document.getElementById("date").addEventListener("input", saveDraft);
+  document.getElementById("mercari").addEventListener("input", saveDraft);
+  document.getElementById("snkrdunk").addEventListener("input", saveDraft);
+  document.getElementById("sommelier").addEventListener("input", saveDraft);
+  document.getElementById("homura").addEventListener("input", saveDraft);
+});
