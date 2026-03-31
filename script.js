@@ -157,6 +157,8 @@ history.push({
   purchase
 });
 
+products[currentProduct].lastUpdated = date;
+
 }
  saveProducts();
 renderChart();
@@ -406,19 +408,20 @@ for (const item of rows) {
   const row = document.createElement("tr");
 
   row.innerHTML = `
-    <td>${item.name}</td>
-    <td>${item.buy}</td>
-    <td>${item.mercariNet}</td>
-    <td>${item.snkrdunkNet}</td>
-    <td>${item.purchase}</td>
-    <td>${item.bestMarket}</td>
-    <td style="color:${item.profit >= 0 ? 'green' : 'red'}">${item.profit}</td>
-    <td>${item.profitRate}%</td>
-    <td>${item.quantity}</td>
-    <td>${item.soldQuantity}</td>
-    <td>${item.remainingQuantity}</td>
-    <td><button onclick="deleteProduct('${item.name}')">削除</button></td>
-  `;
+  <td>${name}</td>
+  <td>${buy}</td>
+  <td>${mercari}</td>
+  <td>${snkrdunk}</td>
+  <td>${purchase}</td>
+  <td>${bestMarket}</td>
+  <td style="color:${profit >= 0 ? 'green' : 'red'}">${profit}</td>
+  <td>${profitRate}%</td>
+  <td>${product.quantity}</td>
+  <td>${soldQuantity}</td>
+  <td>${remainingQuantity}</td>
+  <td>${product.lastUpdated || "-"}</td>
+  <td><button onclick="deleteProduct('${name}')">削除</button></td>
+`;
 
   table.appendChild(row);
 }
