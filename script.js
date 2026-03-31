@@ -38,7 +38,18 @@ function refreshProductSelect() {
   const sellSelect = document.getElementById("sellProductSelect");
 
 if (sellSelect) {
-  sellSelect.innerHTML = select.innerHTML;
+  sellSelect
+  .innerHTML = select.innerHTML;
+}
+const chartSelect =
+  document.getElementById("chartProductSelect");
+
+if (chartSelect) {
+  chartSelect.innerHTML = select.innerHTML;
+
+  if (currentProduct && products[currentProduct]) {
+    chartSelect.value = currentProduct;
+  }
 }
 }
 
@@ -762,3 +773,14 @@ if (!selectedProduct || !products[selectedProduct]) {
   document.getElementById("sellQuantity").value = "";
   document.getElementById("sellPrice").value = "";
  }
+ function changeChartProduct() {
+
+  const chartProduct =
+    document.getElementById("chartProductSelect").value;
+
+  currentProduct = chartProduct;
+
+  saveProducts();
+  renderChart();
+
+}
