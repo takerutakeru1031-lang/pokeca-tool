@@ -61,6 +61,17 @@
 </section>
 
 <section>
+  <h2>売却記録</h2>
+
+  <div class="price-row">
+    <input id="sellQuantity" placeholder="売却個数">
+    <input id="sellPrice" placeholder="売却単価">
+  </div>
+
+  <button onclick="recordSale()">売却記録を追加</button>
+</section>
+
+<section>
   <div id="assetSummary">
 
   <h2>ポケカ資産サマリー</h2>
@@ -76,6 +87,9 @@
   <p id="totalProfit">
     含み益合計：0円
   </p>
+  <p id="realizedProfit">
+  確定益合計：0円
+</p>
 
 </div>
 <h2>商品一覧</h2>
@@ -86,15 +100,18 @@
 <table border="1">
   <thead>
     <tr>
-      <th>商品名</th>
-      <th>仕入れ価格</th>
-      <th>メルカリ</th>
-      <th>スニダン</th>
-      <th>買取</th>
-      <th>最高販路</th>
-      <th>最大利益</th>
-      <th>利益率</th>
-      <th>削除</th>
+ <th>商品名</th>
+<th>仕入</th>
+<th>メルカリ</th>
+<th>スニダン</th>
+<th>買取</th>
+<th>販路</th>
+<th>利益</th>
+<th>利益率</th>
+<th>総数</th>
+<th>売却</th>
+<th>残数</th>
+<th>削除</th>
     </tr>
   </thead>
   <tbody id="productTable">

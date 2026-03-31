@@ -71,12 +71,13 @@ function addProduct() {
       avgPrice;
 
   } else {
-
-    products[name] = {
-      buyPrice: buyPrice,
-      quantity: quantity,
-      history: []
-    };
+products[name] = {
+  buyPrice: buyPrice,
+  quantity: quantity,
+  soldQuantity: 0,
+  realizedProfit: 0,
+  history: []
+};
 
   }
 
@@ -354,17 +355,23 @@ if (bestPrice === homura) bestMarket = "ホムラ";
 
     const row = document.createElement("tr");
 
-    row.innerHTML = `
-      <td>${name}</td>
-      <td>${buy}</td>
-      <td>${mercari}</td>
-      <td>${snkrdunk}</td>
-      <td>${purchase}</td>
-      <td>${bestMarket}</td>
-      <td style="color:${profit >= 0 ? 'green' : 'red'}">${profit}</td>
-      <td>${profitRate}%</td>
-      <td><button onclick="deleteProduct('${name}')">削除</button></td>
-    `;
+    const soldQuantity = product.soldQuantity || 0;
+const remainingQuantity = product.quantity - soldQuantity;
+
+row.innerHTML = `
+  <td>${name}</td>
+  <td>${buy}</td>
+  <td>${mercari}</td>
+  <td>${snkrdunk}</td>
+  <td>${purchase}</td>
+  <td>${bestMarket}</td>
+  <td style="color:${profit >= 0 ? 'green' : 'red'}">${profit}</td>
+  <td>${profitRate}%</td>
+  <td>${product.quantity}</td>
+  <td>${soldQuantity}</td>
+  <td>${remainingQuantity}</td>
+  <td><button onclick="deleteProduct('${name}')">削除</button></td>
+`;
 
     table.appendChild(row);
   }
@@ -548,9 +555,10 @@ async function fetchHomuraPrice(productName) {
 function calculateTotalAsset() {
   let totalValue = 0;
   let totalCost = 0;
-
+let totalRealizedProfit = 0;
   for (const name in products) {
     const product = products[name];
+totalRealizedProfit += product.realizedProfit || 0;
 
     if (!product.history || product.history.length === 0) continue;
 
@@ -562,8 +570,11 @@ function calculateTotalAsset() {
   last.sommelier || 0,
   last.homura || 0
 );
-    totalValue += bestPrice * product.quantity;
-   totalCost += product.buyPrice * product.quantity;
+    const soldQuantity = product.soldQuantity || 0;
+const remainingQuantity = product.quantity - soldQuantity;
+
+totalValue += bestPrice * remainingQuantity;
+totalCost += product.buyPrice * remainingQuantity;
   }
 
   const totalProfit = totalValue - totalCost;
@@ -576,6 +587,9 @@ function calculateTotalAsset() {
 
   document.getElementById("totalProfit").textContent =
     "含み益合計：" + totalProfit.toLocaleString() + "円";
+
+  document.getElementById("realizedProfit").textContent =
+    "確定益合計：" + totalRealizedProfit.toLocaleString() + "円";
 }
 function exportJSON() {
   const dataStr = JSON.stringify(products, null, 2);
@@ -668,3 +682,41 @@ window.addEventListener("load", function () {
   document.getElementById("sommelier").addEventListener("input", saveDraft);
   document.getElementById("homura").addEventListener("input", saveDraft);
 });
+
+function recordSale() {
+  if (!currentProduct || !products[currentProduct]) {
+    alert("商品を選択してください");
+    return;
+  }
+
+  const sellQuantity = Number(document.getElementById("sellQuantity").value);
+  const sellPrice = Number(document.getElementById("sellPrice").value);
+
+  if (!sellQuantity || !sellPrice) {
+    alert("売却個数と売却単価を入力してください");
+    return;
+  }
+
+  const product = products[currentProduct];
+  const remaining = product.quantity - (product.soldQuantity || 0);
+
+  if (sellQuantity > remaining) {
+    alert("残数を超えています");
+    return;
+  }
+
+  const profitPerItem = sellPrice - product.buyPrice;
+  const realizedProfit = profitPerItem * sellQuantity;
+
+  product.soldQuantity = (product.soldQuantity || 0) + sellQuantity;
+  product.realizedProfit = (product.realizedProfit || 0) + realizedProfit;
+
+  saveProducts();
+  renderTable();
+  renderChart();
+  renderRanking();
+  calculateTotalAsset();
+
+  document.getElementById("sellQuantity").value = "";
+  document.getElementById("sellPrice").value = "";
+ }
