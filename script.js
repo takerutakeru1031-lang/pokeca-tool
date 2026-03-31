@@ -202,15 +202,18 @@ document.getElementById("holdingPeriodText").textContent = "保有日数：未�
   let profit = 0;
 
   if (last) {
-  bestPrice = Math.max(
-  last.mercari,
-  last.snkrdunk,
+const mercariNet = last.mercari * 0.9;
+const snkrdunkNet = last.snkrdunk * 0.9;
+
+const bestPrice = Math.max(
+  mercariNet,
+  snkrdunkNet,
   last.sommelier,
   last.homura
 );
 
-if (bestPrice === last.mercari) bestMarket = "メルカリ";
-if (bestPrice === last.snkrdunk) bestMarket = "スニダン";
+if (bestPrice === mercariNet) bestMarket = "メルカリ";
+if (bestPrice === snkrdunkNet) bestMarket = "スニダン";
 if (bestPrice === last.sommelier) bestMarket = "ソムリエ";
 if (bestPrice === last.homura) bestMarket = "ホムラ";
     profit = bestPrice - buyPrice;
@@ -348,10 +351,13 @@ document.getElementById("holdingPeriodText").textContent =
     const sommelier = last.sommelier;
 const homura = last.homura;
 
-const bestPrice = Math.max(mercari, snkrdunk, sommelier, homura);
+const mercariNet = Math.round(mercari * 0.9);
+const snkrdunkNet = Math.round(snkrdunk * 0.9);
 
-if (bestPrice === mercari) bestMarket = "メルカリ";
-if (bestPrice === snkrdunk) bestMarket = "スニダン";
+const bestPrice = Math.max(mercariNet, snkrdunkNet, sommelier, homura);
+
+if (bestPrice === mercariNet) bestMarket = "メルカリ";
+if (bestPrice === snkrdunkNet) bestMarket = "スニダン";
 if (bestPrice === sommelier) bestMarket = "ソムリエ";
 if (bestPrice === homura) bestMarket = "ホムラ";
 
@@ -366,8 +372,8 @@ const remainingQuantity = product.quantity - soldQuantity;
 row.innerHTML = `
   <td>${name}</td>
   <td>${buy}</td>
-  <td>${mercari}</td>
-  <td>${snkrdunk}</td>
+  <td>${mercariNet}</td>
+<td>${snkrdunkNet}</td>
   <td>${purchase}</td>
   <td>${bestMarket}</td>
   <td style="color:${profit >= 0 ? 'green' : 'red'}">${profit}</td>
@@ -436,9 +442,12 @@ function renderRanking() {
     const last = product.history[product.history.length - 1];
     const buy = product.buyPrice;
 
-    const bestPrice = Math.max(
-  last.mercari,
-  last.snkrdunk,
+   const mercariNet = last.mercari * 0.9;
+const snkrdunkNet = last.snkrdunk * 0.9;
+
+const bestPrice = Math.max(
+  mercariNet,
+  snkrdunkNet,
   last.sommelier,
   last.homura
 );
