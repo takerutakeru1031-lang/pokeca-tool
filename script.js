@@ -35,6 +35,11 @@ function refreshProductSelect() {
   if (currentProduct && products[currentProduct]) {
     select.value = currentProduct;
   }
+  const sellSelect = document.getElementById("sellProductSelect");
+
+if (sellSelect) {
+  sellSelect.innerHTML = select.innerHTML;
+}
 }
 
 
@@ -684,10 +689,13 @@ window.addEventListener("load", function () {
 });
 
 function recordSale() {
-  if (!currentProduct || !products[currentProduct]) {
-    alert("商品を選択してください");
-    return;
-  }
+ const selectedProduct =
+  document.getElementById("sellProductSelect").value;
+
+if (!selectedProduct || !products[selectedProduct]) {
+  alert("商品を選択してください");
+  return;
+}
 
   const sellQuantity = Number(document.getElementById("sellQuantity").value);
   const sellPrice = Number(document.getElementById("sellPrice").value);
@@ -697,7 +705,7 @@ function recordSale() {
     return;
   }
 
-  const product = products[currentProduct];
+ const product = products[selectedProduct];
   const remaining = product.quantity - (product.soldQuantity || 0);
 
   if (sellQuantity > remaining) {
