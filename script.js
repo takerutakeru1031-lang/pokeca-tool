@@ -334,58 +334,83 @@ document.getElementById("holdingPeriodText").textContent =
   return;
 }
 
-  for (const name in products) {
-    const product = products[name];
+ const rows = [];
 
-    if (product.history.length === 0) continue;
+for (const name in products) {
+  const product = products[name];
 
-    const last = product.history[product.history.length - 1];
+  if (product.history.length === 0) continue;
 
-    const buy = product.buyPrice;
-    const mercari = last.mercari;
-    const snkrdunk = last.snkrdunk;
-    const purchase = last.purchase;
+  const last = product.history[product.history.length - 1];
 
-    let bestMarket = "";
+  const buy = product.buyPrice;
+  const mercari = last.mercari;
+  const snkrdunk = last.snkrdunk;
+  const purchase = last.purchase;
 
-    const sommelier = last.sommelier;
-const homura = last.homura;
+  const sommelier = last.sommelier;
+  const homura = last.homura;
 
-const mercariNet = Math.round(mercari * 0.9);
-const snkrdunkNet = Math.round(snkrdunk * 0.9);
+  const mercariNet = Math.round(mercari * 0.9);
+  const snkrdunkNet = Math.round(snkrdunk * 0.9);
 
-const bestPrice = Math.max(mercariNet, snkrdunkNet, sommelier, homura);
+  const bestPrice = Math.max(
+    mercariNet,
+    snkrdunkNet,
+    sommelier,
+    homura
+  );
 
-if (bestPrice === mercariNet) bestMarket = "メルカリ";
-if (bestPrice === snkrdunkNet) bestMarket = "スニダン";
-if (bestPrice === sommelier) bestMarket = "ソムリエ";
-if (bestPrice === homura) bestMarket = "ホムラ";
+  let bestMarket = "";
 
-    const profit = bestPrice - buy;
-    const profitRate = Math.round((profit / buy) * 100);
+  if (bestPrice === mercariNet) bestMarket = "メルカリ";
+  if (bestPrice === snkrdunkNet) bestMarket = "スニダン";
+  if (bestPrice === sommelier) bestMarket = "ソムリエ";
+  if (bestPrice === homura) bestMarket = "ホムラ";
 
-    const row = document.createElement("tr");
+  const profit = bestPrice - buy;
+  const profitRate = Math.round((profit / buy) * 100);
 
-    const soldQuantity = product.soldQuantity || 0;
-const remainingQuantity = product.quantity - soldQuantity;
+  const soldQuantity = product.soldQuantity || 0;
+  const remainingQuantity = product.quantity - soldQuantity;
 
-row.innerHTML = `
-  <td>${name}</td>
-  <td>${buy}</td>
-  <td>${mercariNet}</td>
-<td>${snkrdunkNet}</td>
-  <td>${purchase}</td>
-  <td>${bestMarket}</td>
-  <td style="color:${profit >= 0 ? 'green' : 'red'}">${profit}</td>
-  <td>${profitRate}%</td>
-  <td>${product.quantity}</td>
-  <td>${soldQuantity}</td>
-  <td>${remainingQuantity}</td>
-  <td><button onclick="deleteProduct('${name}')">削除</button></td>
-`;
+  rows.push({
+    name,
+    buy,
+    mercariNet,
+    snkrdunkNet,
+    purchase,
+    bestMarket,
+    profit,
+    profitRate,
+    quantity: product.quantity,
+    soldQuantity,
+    remainingQuantity
+  });
+}
 
-    table.appendChild(row);
-  }
+rows.sort((a, b) => b.profit - a.profit);
+
+for (const item of rows) {
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td>${item.name}</td>
+    <td>${item.buy}</td>
+    <td>${item.mercariNet}</td>
+    <td>${item.snkrdunkNet}</td>
+    <td>${item.purchase}</td>
+    <td>${item.bestMarket}</td>
+    <td style="color:${item.profit >= 0 ? 'green' : 'red'}">${item.profit}</td>
+    <td>${item.profitRate}%</td>
+    <td>${item.quantity}</td>
+    <td>${item.soldQuantity}</td>
+    <td>${item.remainingQuantity}</td>
+    <td><button onclick="deleteProduct('${item.name}')">削除</button></td>
+  `;
+
+  table.appendChild(row);
+}
   renderRanking();
 }
 
