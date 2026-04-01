@@ -3,15 +3,18 @@ let chart;
 let products = JSON.parse(localStorage.getItem("products")) || {};
 
 let currentProduct = localStorage.getItem("currentProduct") || null;
+let currentChartProduct = localStorage.getItem("currentChartProduct") || null;
 
 function saveProducts() {
   localStorage.setItem("products", JSON.stringify(products));
   localStorage.setItem("currentProduct", currentProduct);
+  localStorage.setItem("currentChartProduct", currentChartProduct);
 }
 
 function loadProducts() {
   const savedProducts = localStorage.getItem("products");
   const savedCurrentProduct = localStorage.getItem("currentProduct");
+  const savedCurrentChartProduct = localStorage.getItem("currentChartProduct");
 
   if (savedProducts) {
     products = JSON.parse(savedProducts);
@@ -20,7 +23,12 @@ function loadProducts() {
   if (savedCurrentProduct) {
     currentProduct = savedCurrentProduct;
   }
+
+  if (savedCurrentChartProduct) {
+    currentChartProduct = savedCurrentChartProduct;
+  }
 }
+
 function refreshProductSelect() {
   const select = document.getElementById("productSelect");
   select.innerHTML = "";
@@ -168,7 +176,7 @@ localStorage.removeItem("draftData");
 }
 
 function renderChart() {
-  if (!currentProduct || !products[currentProduct]) {
+  if (!currentChartProduct || !products[currentChartProduct]) {
     if (chart) {
       chart.destroy();
       chart = null;
@@ -181,8 +189,8 @@ document.getElementById("holdingPeriodText").textContent = "保有日数：未�
     return;
   }
 
-  const history = products[currentProduct].history;
-  const buyPrice = products[currentProduct].buyPrice;
+ const history = products[currentChartProduct].history;
+const buyPrice = products[currentChartProduct].buyPrice;
   const labels = history.map(d => d.date);
 
   const chartData = {
@@ -778,13 +786,10 @@ if (!selectedProduct || !products[selectedProduct]) {
   document.getElementById("sellPrice").value = "";
  }
  function changeChartProduct() {
+  const chartProduct = document.getElementById("chartProductSelect").value;
 
-  const chartProduct =
-    document.getElementById("chartProductSelect").value;
-
-  currentProduct = chartProduct;
+  currentChartProduct = chartProduct;
 
   saveProducts();
   renderChart();
-
 }
