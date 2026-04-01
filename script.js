@@ -420,8 +420,8 @@ for (const item of rows) {
   <td>${item.quantity}</td>
   <td>${item.soldQuantity}</td>
   <td>${item.remainingQuantity}</td>
-  <td><button onclick="deleteProduct('${item.name}')">削除</button></td>
 <td>${item.lastUpdated || "-"}</td>
+<td><button onclick="deleteProduct('${item.name}')">削除</button></td>
 `;
 
   table.appendChild(row);
