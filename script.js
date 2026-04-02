@@ -27,6 +27,15 @@ function loadProducts() {
   if (savedCurrentChartProduct) {
     currentChartProduct = savedCurrentChartProduct;
   }
+  if (!currentChartProduct && currentProduct) {
+    currentChartProduct = currentProduct;
+  }
+  if (!currentChartProduct) {
+    const names = Object.keys(products);
+    if (names.length > 0) {
+      currentChartProduct = names[0];
+    }
+  }
 }
 
 function refreshProductSelect() {
@@ -55,8 +64,12 @@ const chartSelect =
 if (chartSelect) {
   chartSelect.innerHTML = select.innerHTML;
 
-  if (currentProduct && products[currentProduct]) {
-    chartSelect.value = currentProduct;
+  if (!currentChartProduct) {
+    currentChartProduct = select.value || null;
+  }
+
+  if (currentChartProduct && products[currentChartProduct]) {
+    chartSelect.value = currentChartProduct;
   }
 }
 }
@@ -106,6 +119,9 @@ products[name] = {
   }
 
   currentProduct = name;
+  if (!currentChartProduct) {
+    currentChartProduct = name;
+  }
 
   refreshProductSelect();
   saveProducts();
@@ -164,10 +180,8 @@ history.push({
   homura,
   purchase
 });
-
-products[currentProduct].lastUpdated = date;
-
 }
+products[currentProduct].lastUpdated = date;
  saveProducts();
 renderChart();
 renderRanking();
@@ -176,7 +190,22 @@ localStorage.removeItem("draftData");
 }
 
 function renderChart() {
-  if (!currentChartProduct || !products[currentChartProduct]) {
+  let chartProduct = currentChartProduct;
+
+  if (!chartProduct || !products[chartProduct]) {
+    if (currentProduct && products[currentProduct]) {
+      chartProduct = currentProduct;
+      currentChartProduct = currentProduct;
+    } else {
+      const names = Object.keys(products);
+      if (names.length > 0) {
+        chartProduct = names[0];
+        currentChartProduct = names[0];
+      }
+    }
+  }
+
+  if (!chartProduct || !products[chartProduct]) {
     if (chart) {
       chart.destroy();
       chart = null;
@@ -185,35 +214,48 @@ function renderChart() {
     document.getElementById("summaryText").textContent = "商品情報：未選択";
     document.getElementById("marketChangeText").textContent = "市場変化：未計算";
     document.getElementById("entryPositionText").textContent = "参入ポジション：未計算";
-document.getElementById("holdingPeriodText").textContent = "保有日数：未計算";
+    document.getElementById("holdingPeriodText").textContent = "保有日数：未計算";
     return;
   }
 
- const history = products[currentChartProduct].history;
-const buyPrice = products[currentChartProduct].buyPrice;
+  const history = products[chartProduct].history;
+  const buyPrice = products[chartProduct].buyPrice;
   const labels = history.map(d => d.date);
 
   const chartData = {
     labels: labels,
-   datasets: [
-  {
-    label: "仕入価格",
-    data: history.map(() => buyPrice)
-  },
-  {
-    label: "メルカリ価格",
-    data: history.map(d => d.mercari)
-  },
-  {
-    label: "スニダン価格",
-    data: history.map(d => d.snkrdunk)
-  },
-  {
-    label: "買取価格",
-    data: history.map(d => d.purchase)
-  }
-]
+    datasets: [
+      {
+        label: "仕入価格",
+        data: history.map(() => buyPrice)
+      },
+      {
+        label: "メルカリ価格",
+        data: history.map(d => d.mercari)
+      },
+      {
+        label: "スニダン価格",
+        data: history.map(d => d.snkrdunk)
+      },
+      {
+        label: "買取価格",
+        data: history.map(d => d.purchase)
+      }
+    ]
   };
+
+  if (!history || history.length === 0) {
+    if (chart) {
+      chart.destroy();
+      chart = null;
+    }
+
+    document.getElementById("summaryText").textContent = "商品情報：未選択";
+    document.getElementById("marketChangeText").textContent = "市場変化：未計算";
+    document.getElementById("entryPositionText").textContent = "参入ポジション：未計算";
+    document.getElementById("holdingPeriodText").textContent = "保有日数：未計算";
+    return;
+  }
 
   const firstDate = history.length > 0 ? history[0].date : "未登録";
   const last = history.length > 0 ? history[history.length - 1] : null;
@@ -223,20 +265,20 @@ const buyPrice = products[currentChartProduct].buyPrice;
   let profit = 0;
 
   if (last) {
-const mercariNet = last.mercari * 0.9;
-const snkrdunkNet = last.snkrdunk * 0.9;
+    const mercariNet = Math.round((last.mercari || 0) * 0.9);
+    const snkrdunkNet = Math.round((last.snkrdunk || 0) * 0.9);
 
-const bestPrice = Math.max(
-  mercariNet,
-  snkrdunkNet,
-  last.sommelier,
-  last.homura
-);
+    bestPrice = Math.max(
+      mercariNet,
+      snkrdunkNet,
+      last.sommelier || 0,
+      last.homura || 0
+    );
 
-if (bestPrice === mercariNet) bestMarket = "メルカリ";
-if (bestPrice === snkrdunkNet) bestMarket = "スニダン";
-if (bestPrice === last.sommelier) bestMarket = "ソムリエ";
-if (bestPrice === last.homura) bestMarket = "ホムラ";
+    if (bestPrice === mercariNet) bestMarket = "メルカリ";
+    if (bestPrice === snkrdunkNet) bestMarket = "スニダン";
+    if (bestPrice === last.sommelier) bestMarket = "ソムリエ";
+    if (bestPrice === last.homura) bestMarket = "ホムラ";
     profit = bestPrice - buyPrice;
   }
 
@@ -470,6 +512,9 @@ function deleteProduct(name) {
   if (currentProduct === name) {
     currentProduct = "";
   }
+  if (currentChartProduct === name) {
+    currentChartProduct = "";
+  }
 
   saveProducts();
   refreshProductSelect();
@@ -626,12 +671,15 @@ totalRealizedProfit += product.realizedProfit || 0;
 
     const last = product.history[product.history.length - 1];
 
+    const mercariNet = Math.round((last.mercari || 0) * 0.9);
+    const snkrdunkNet = Math.round((last.snkrdunk || 0) * 0.9);
+
     const bestPrice = Math.max(
-  last.mercari || 0,
-  last.snkrdunk || 0,
-  last.sommelier || 0,
-  last.homura || 0
-);
+      mercariNet,
+      snkrdunkNet,
+      last.sommelier || 0,
+      last.homura || 0
+    );
     const soldQuantity = product.soldQuantity || 0;
 const remainingQuantity = product.quantity - soldQuantity;
 
@@ -680,6 +728,7 @@ document.getElementById("jsonFileInput").addEventListener("change", function (ev
       products = importedData;
       const names = Object.keys(products);
       currentProduct = names.length ? names[0] : "";
+      currentChartProduct = names.length ? names[0] : "";
 
       saveProducts();
       refreshProductSelect();
