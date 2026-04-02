@@ -38,6 +38,48 @@ function loadProducts() {
   }
 }
 
+function parseFlexibleDate(dateStr) {
+  if (!dateStr || typeof dateStr !== "string") return null;
+
+  const parts = dateStr.split("/");
+
+  // YYYY/MM/DD format
+  if (parts.length === 3) {
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+
+    if (!year || !month || !day) return null;
+
+    return new Date(year, month - 1, day);
+  }
+
+  // MM/DD format (fallback)
+  if (parts.length === 2) {
+    const month = Number(parts[0]);
+    const day = Number(parts[1]);
+
+    if (!month || !day) return null;
+
+    const year = new Date().getFullYear();
+    return new Date(year, month - 1, day);
+  }
+
+  return null;
+}
+
+function getDaysBetween(startStr, endStr) {
+  const startDate = parseFlexibleDate(startStr);
+  const endDate = parseFlexibleDate(endStr);
+
+  if (!startDate || !endDate) return 0;
+
+  const diffMs = endDate - startDate;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  return diffDays > 0 ? diffDays : 0;
+}
+
 function refreshProductSelect() {
   const select = document.getElementById("productSelect");
   select.innerHTML = "";
@@ -290,16 +332,16 @@ function renderChart() {
     " / 現在の最高販路：" + bestMarket +
     " / 現在の最大利益：" + profit + "（" + profitRate + "%）";
 
-    let holdingDays = 0;
-let profitPerDay = 0;
+  let holdingDays = 0;
+  let profitPerDay = 0;
 
-if (history.length > 0) {
-  holdingDays = history.length - 1;
+  if (history.length > 0) {
+    holdingDays = getDaysBetween(history[0].date, last.date);
 
-  if (holdingDays > 0) {
-    profitPerDay = Math.round(profit / holdingDays);
+    if (holdingDays > 0) {
+      profitPerDay = Math.round(profit / holdingDays);
+    }
   }
-}
 
 document.getElementById("holdingPeriodText").textContent =
   "保有日数：" + holdingDays +
@@ -548,7 +590,9 @@ const bestPrice = Math.max(
     const profit = bestPrice - buy;
     const profitRate = Math.round((profit / buy) * 100);
 
-    const holdingDays = product.history.length - 1;
+    const firstDate = product.history[0].date;
+    const lastDate = last.date;
+    const holdingDays = getDaysBetween(firstDate, lastDate);
     let profitPerDay = 0;
 
     if (holdingDays > 0) {
