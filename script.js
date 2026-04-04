@@ -96,24 +96,34 @@ function refreshProductSelect() {
   }
   const sellSelect = document.getElementById("sellProductSelect");
 
-if (sellSelect) {
-  sellSelect
-  .innerHTML = select.innerHTML;
-}
-const chartSelect =
-  document.getElementById("chartProductSelect");
-
-if (chartSelect) {
-  chartSelect.innerHTML = select.innerHTML;
-
-  if (!currentChartProduct) {
-    currentChartProduct = select.value || null;
+  if (sellSelect) {
+    sellSelect.innerHTML = select.innerHTML;
   }
 
-  if (currentChartProduct && products[currentChartProduct]) {
-    chartSelect.value = currentChartProduct;
+  const chartSelect = document.getElementById("chartProductSelect");
+
+  if (chartSelect) {
+    chartSelect.innerHTML = select.innerHTML;
+
+    if (!currentChartProduct) {
+      currentChartProduct = select.value || null;
+    }
+
+    if (currentChartProduct && products[currentChartProduct]) {
+      chartSelect.value = currentChartProduct;
+    }
   }
 }
+
+function changeProduct() {
+  const selectedProduct = document.getElementById("productSelect").value;
+
+  if (!selectedProduct || !products[selectedProduct]) {
+    return;
+  }
+
+  currentProduct = selectedProduct;
+  saveProducts();
 }
 
 
@@ -180,10 +190,14 @@ products[name] = {
 
 
 function addData() {
-  if (!currentProduct) {
+  const selectedProduct = document.getElementById("productSelect").value;
+
+  if (!selectedProduct || !products[selectedProduct]) {
     alert("商品を選択してください");
     return;
   }
+
+  currentProduct = selectedProduct;
 
   const date = document.getElementById("date").value;
   const mercari = Number(document.getElementById("mercari").value);
@@ -229,6 +243,8 @@ renderChart();
 renderRanking();
 calculateTotalAsset();
 localStorage.removeItem("draftData");
+
+alert(currentProduct + " に記録しました");
 }
 
 function renderChart() {
