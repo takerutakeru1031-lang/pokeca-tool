@@ -4,6 +4,7 @@ let products = JSON.parse(localStorage.getItem("products")) || {};
 
 let currentProduct = localStorage.getItem("currentProduct") || null;
 let currentChartProduct = localStorage.getItem("currentChartProduct") || null;
+let editingQuantityProduct = null;
 
 function saveProducts() {
   localStorage.setItem("products", JSON.stringify(products));
@@ -19,6 +20,7 @@ function loadProducts() {
   if (savedProducts) {
     products = JSON.parse(savedProducts);
   }
+  normalizeProductsData();
 
   if (savedCurrentProduct) {
     currentProduct = savedCurrentProduct;
@@ -30,11 +32,54 @@ function loadProducts() {
   if (!currentChartProduct && currentProduct) {
     currentChartProduct = currentProduct;
   }
-  if (!currentChartProduct) {
+    if (!currentChartProduct) {
     const names = Object.keys(products);
     if (names.length > 0) {
       currentChartProduct = names[0];
     }
+  }
+
+  if (editingQuantityProduct && !products[editingQuantityProduct]) {
+    editingQuantityProduct = null;
+  }
+}
+
+function sortHistoryByDate(history) {
+  if (!Array.isArray(history)) return [];
+
+  return history.sort((a, b) => {
+    const dateA = parseFlexibleDate(a.date);
+    const dateB = parseFlexibleDate(b.date);
+
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+
+    return dateA - dateB;
+  });
+}
+
+function normalizeProductsData() {
+  for (const name in products) {
+    const product = products[name] || {};
+
+    product.buyPrice = Number(product.buyPrice) || 0;
+    product.quantity = Number(product.quantity) || 0;
+    product.soldQuantity = Number(product.soldQuantity) || 0;
+    product.realizedProfit = Number(product.realizedProfit) || 0;
+    product.history = Array.isArray(product.history) ? product.history : [];
+
+    product.history = product.history.map(item => ({
+      date: item.date || "",
+      mercari: Number(item.mercari) || 0,
+      snkrdunk: Number(item.snkrdunk) || 0,
+      sommelier: Number(item.sommelier) || 0,
+      homura: Number(item.homura) || 0,
+      purchase: Number(item.purchase) || Math.max(Number(item.sommelier) || 0, Number(item.homura) || 0)
+    }));
+
+    sortHistoryByDate(product.history);
+    products[name] = product;
   }
 }
 
@@ -78,6 +123,40 @@ function getDaysBetween(startStr, endStr) {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   return diffDays > 0 ? diffDays : 0;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeForSingleQuote(str) {
+  return String(str)
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'");
+}
+
+function getQuantityInputId(name) {
+  return "editQuantityInput_" + encodeURIComponent(name);
+}
+
+
+function getSafeRemainingQuantity(product) {
+  const quantity = Number(product.quantity) || 0;
+  const soldQuantity = Number(product.soldQuantity) || 0;
+  return Math.max(0, quantity - soldQuantity);
+}
+
+function refreshAllUI() {
+  refreshProductSelect();
+  renderChart();
+  renderTable();
+  renderRanking();
+  calculateTotalAsset();
 }
 
 function refreshProductSelect() {
@@ -137,6 +216,10 @@ function addProduct() {
     alert("商品名・仕入価格・個数を入力してください");
     return;
   }
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+    alert("個数は1以上の整数で入力してください");
+    return;
+  }
 
   if (products[name]) {
 
@@ -171,15 +254,10 @@ products[name] = {
   }
 
   currentProduct = name;
-  if (!currentChartProduct) {
-    currentChartProduct = name;
-  }
+  currentChartProduct = name;
 
-  refreshProductSelect();
   saveProducts();
-  renderChart();
-  renderRanking();
-  calculateTotalAsset();
+  refreshAllUI();
 
   document.getElementById("productName").value = "";
   document.getElementById("productBuyPrice").value = "";
@@ -217,31 +295,29 @@ const existingIndex =
   history.findIndex(item => item.date === date);
 
 if (existingIndex !== -1) {
-
- history[existingIndex] = {
-  date,
-  mercari,
-  snkrdunk,
-  sommelier,
-  homura,
-  purchase
-};
+  history[existingIndex] = {
+    date,
+    mercari,
+    snkrdunk,
+    sommelier,
+    homura,
+    purchase
+  };
 } else {
-
-history.push({
-  date,
-  mercari,
-  snkrdunk,
-  sommelier,
-  homura,
-  purchase
-});
+  history.push({
+    date,
+    mercari,
+    snkrdunk,
+    sommelier,
+    homura,
+    purchase
+  });
 }
+
+sortHistoryByDate(history);
 products[currentProduct].lastUpdated = date;
- saveProducts();
-renderChart();
-renderRanking();
-calculateTotalAsset();
+saveProducts();
+refreshAllUI();
 localStorage.removeItem("draftData");
 
 alert(currentProduct + " に記録しました");
@@ -308,7 +384,7 @@ function renderChart() {
       chart = null;
     }
 
-    document.getElementById("summaryText").textContent = "商品情報：未選択";
+    document.getElementById("summaryText").textContent = "商品情報：" + chartProduct + "（価格履歴なし）";
     document.getElementById("marketChangeText").textContent = "市場変化：未計算";
     document.getElementById("entryPositionText").textContent = "参入ポジション：未計算";
     document.getElementById("holdingPeriodText").textContent = "保有日数：未計算";
@@ -340,7 +416,7 @@ function renderChart() {
     profit = bestPrice - buyPrice;
   }
 
-  const profitRate = Math.round((profit / buyPrice) * 100);
+    const profitRate = buyPrice > 0 ? Math.round((profit / buyPrice) * 100) : 0;
 
   document.getElementById("summaryText").textContent =
     "参入日：" + firstDate +
@@ -438,7 +514,6 @@ document.getElementById("holdingPeriodText").textContent =
     }
   }]
 });
-  renderTable();
 }
 
 
@@ -490,10 +565,10 @@ for (const name in products) {
   if (bestPrice === homura) bestMarket = "ホムラ";
 
   const profit = bestPrice - buy;
-  const profitRate = Math.round((profit / buy) * 100);
+  const profitRate = buy > 0 ? Math.round((profit / buy) * 100) : 0;
 
-  const soldQuantity = product.soldQuantity || 0;
-  const remainingQuantity = product.quantity - soldQuantity;
+  const soldQuantity = Number(product.soldQuantity) || 0;
+  const remainingQuantity = getSafeRemainingQuantity(product);
 
   rows.push({
   name,
@@ -515,9 +590,13 @@ rows.sort((a, b) => b.profit - a.profit);
 
 for (const item of rows) {
   const row = document.createElement("tr");
+  const isEditing = editingQuantityProduct === item.name;
+  const safeName = escapeHtml(item.name);
+  const safeJsName = escapeForSingleQuote(item.name);
+  const inputId = getQuantityInputId(item.name);
 
   row.innerHTML = `
-  <td>${item.name}</td>
+  <td>${safeName}</td>
   <td>${item.buy}</td>
   <td>${item.mercariNet}</td>
   <td>${item.snkrdunkNet}</td>
@@ -525,16 +604,21 @@ for (const item of rows) {
   <td>${item.bestMarket}</td>
   <td style="color:${item.profit >= 0 ? 'green' : 'red'}">${item.profit}</td>
   <td>${item.profitRate}%</td>
-  <td>${item.quantity}</td>
+  <td>${isEditing ? `<input id="${inputId}" type="number" min="0" step="1" value="${item.quantity}" style="width:80px;">` : item.quantity}</td>
   <td>${item.soldQuantity}</td>
   <td>${item.remainingQuantity}</td>
-<td>${item.lastUpdated || "-"}</td>
-<td><button onclick="deleteProduct('${item.name}')">削除</button></td>
+  <td>${item.lastUpdated || "-"}</td>
+  <td>
+    ${isEditing
+      ? `<button onclick="saveEditedProductQuantity('${safeJsName}')">保存</button> <button onclick="cancelEditProductQuantity()">キャンセル</button>`
+      : `<button onclick="startEditProductQuantity('${safeJsName}')">数量訂正</button> <button onclick="deleteProduct('${safeJsName}')">削除</button>`}
+  </td>
 `;
 
   table.appendChild(row);
 }
-  renderRanking();
+
+renderRanking();
 }
 
 function exportCSV() {
@@ -564,23 +648,82 @@ function exportCSV() {
   URL.revokeObjectURL(url);
   }
 
+
 function deleteProduct(name) {
   delete products[name];
 
+  if (editingQuantityProduct === name) {
+    editingQuantityProduct = null;
+  }
+
+  const names = Object.keys(products);
+
   if (currentProduct === name) {
-    currentProduct = "";
+    currentProduct = names.length ? names[0] : "";
   }
   if (currentChartProduct === name) {
-    currentChartProduct = "";
+    currentChartProduct = names.length ? names[0] : "";
   }
 
   saveProducts();
-  refreshProductSelect();
-  renderTable();
-  renderChart();
-  renderRanking();
-  calculateTotalAsset();
+  refreshAllUI();
 }
+
+function startEditProductQuantity(name) {
+  if (!products[name]) {
+    alert("商品が見つかりません");
+    return;
+  }
+
+  editingQuantityProduct = name;
+  renderTable();
+
+  const input = document.getElementById(getQuantityInputId(name));
+  if (input) {
+    input.focus();
+    input.select();
+  }
+}
+
+function cancelEditProductQuantity() {
+  editingQuantityProduct = null;
+  renderTable();
+}
+
+function saveEditedProductQuantity(name) {
+  const product = products[name];
+
+  if (!product) {
+    alert("商品が見つかりません");
+    return;
+  }
+
+  const input = document.getElementById(getQuantityInputId(name));
+  if (!input) {
+    alert("数量入力欄が見つかりません");
+    return;
+  }
+
+  const soldQuantity = Number(product.soldQuantity) || 0;
+  const newQuantity = Number(input.value);
+
+  if (!Number.isInteger(newQuantity) || newQuantity < 0) {
+    alert("0以上の整数で入力してください");
+    return;
+  }
+
+  if (newQuantity < soldQuantity) {
+    alert("売却済み個数より少なくはできません");
+    return;
+  }
+
+  product.quantity = newQuantity;
+  editingQuantityProduct = null;
+
+  saveProducts();
+  refreshAllUI();
+}
+
 
 function renderRanking() {
   const items = [];
@@ -604,7 +747,7 @@ const bestPrice = Math.max(
 );
 
     const profit = bestPrice - buy;
-    const profitRate = Math.round((profit / buy) * 100);
+    const profitRate = buy > 0 ? Math.round((profit / buy) * 100) : 0;
 
     const firstDate = product.history[0].date;
     const lastDate = last.date;
@@ -740,9 +883,7 @@ totalRealizedProfit += product.realizedProfit || 0;
       last.sommelier || 0,
       last.homura || 0
     );
-    const soldQuantity = product.soldQuantity || 0;
-const remainingQuantity = product.quantity - soldQuantity;
-
+  const remainingQuantity = getSafeRemainingQuantity(product);
 totalValue += bestPrice * remainingQuantity;
 totalCost += product.buyPrice * remainingQuantity;
   }
@@ -786,16 +927,13 @@ document.getElementById("jsonFileInput").addEventListener("change", function (ev
       const importedData = JSON.parse(e.target.result);
 
       products = importedData;
+      normalizeProductsData();
       const names = Object.keys(products);
       currentProduct = names.length ? names[0] : "";
       currentChartProduct = names.length ? names[0] : "";
 
       saveProducts();
-      refreshProductSelect();
-      renderTable();
-      renderChart();
-      renderRanking();
-      calculateTotalAsset();
+      refreshAllUI();
 
       alert("復元成功！");
     } catch (error) {
@@ -841,11 +979,7 @@ window.addEventListener("load", function () {
   loadProducts();
   loadDraft();
 
-  refreshProductSelect();
-  renderTable();
-  renderChart();
-  renderRanking();
-  calculateTotalAsset();
+  refreshAllUI();
 
   document.getElementById("date").addEventListener("input", saveDraft);
   document.getElementById("mercari").addEventListener("input", saveDraft);
@@ -866,16 +1000,21 @@ if (!selectedProduct || !products[selectedProduct]) {
   const sellQuantity = Number(document.getElementById("sellQuantity").value);
   const sellPrice = Number(document.getElementById("sellPrice").value);
 
-  if (!sellQuantity || !sellPrice) {
-    alert("売却個数と売却単価を入力してください");
+  if (!Number.isInteger(sellQuantity) || sellQuantity <= 0 || !sellPrice) {
+    alert("売却個数は1以上の整数、売却単価を入力してください");
     return;
   }
 
  const product = products[selectedProduct];
-  const remaining = product.quantity - (product.soldQuantity || 0);
+  const remaining = getSafeRemainingQuantity(product);
 
   if (sellQuantity > remaining) {
     alert("残数を超えています");
+    return;
+  }
+
+  if (remaining <= 0) {
+    alert("この商品はもう残っていません");
     return;
   }
 
@@ -886,10 +1025,7 @@ if (!selectedProduct || !products[selectedProduct]) {
   product.realizedProfit = (product.realizedProfit || 0) + realizedProfit;
 
   saveProducts();
-  renderTable();
-  renderChart();
-  renderRanking();
-  calculateTotalAsset();
+  refreshAllUI();
 
   document.getElementById("sellQuantity").value = "";
   document.getElementById("sellPrice").value = "";
@@ -900,5 +1036,5 @@ if (!selectedProduct || !products[selectedProduct]) {
   currentChartProduct = chartProduct;
 
   saveProducts();
-  renderChart();
+  refreshAllUI();
 }
